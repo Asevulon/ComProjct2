@@ -53,7 +53,7 @@ struct Object
 		ObjectArray *Array;
 	} Value;
 	friend bool operator ==(Object const& lhs, Object const& rhs);
-
+	
 };
 
 //////////////////////////////////////////////////////////////////////////

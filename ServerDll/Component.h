@@ -34,7 +34,8 @@ class CList : public ICollection, public IEnumerator
 
 
 
-	std::list<Object> l;
+	std::list<Object> m_l;
+	int m_Enumerator = 0;
 
 public:
 
