@@ -4,41 +4,72 @@
 using namespace std;
 
 // Ìועמהû ICollection
+Object* OnAddArray(Object* data)
+{
+	Object* out = new Object;
+	out->Type = otArray;
+	out->Value.Array = new ObjectArray;
+	out->Value.Array->Count = data->Value.Array->Count;
+	out->Value.Array->Data = new Object[data->Value.Array->Count];
+
+	for (int i = 0; i < data->Value.Array->Count; i++)
+	{
+		if (data->Value.Array->Data[i].Type == otArray)out->Value.Array->Data[i] = *OnAddArray(&data->Value.Array->Data[i]);
+		else
+			out->Value.Array->Data[i] = data->Value.Array->Data[i];
+	}
+
+	return out;
+}
 HRESULT __stdcall CList::Add(Object obj)
 {
 	if (obj.Type != otArray)m_l.push_back(obj);
 	else
 	{
-		Object temp = { };
-		temp.Type = otArray;
-		temp.Value.Array = new ObjectArray;
-		temp.Value.Array->Count = obj.Value.Array->Count;
-		temp.Value.Array->Data = new Object[temp.Value.Array->Count];
-		for (int i = 0; i < temp.Value.Array->Count; i++)
-		{
-			temp.Value.Array->Data[i] = obj.Value.Array->Data[i];
-		}
-		m_l.push_back(temp);
+		Object* temp = OnAddArray(&obj);
+
+		m_l.push_back(*temp);
 	}
 	return S_OK;
 }
 
+bool CompareArrays(ObjectArray* left, ObjectArray* right)
+{
+	if (left->Count != right->Count)return false;
+	for (int i = 0; i < left->Count; i++)
+	{
+		if (!(left->Data[i] == right->Data[i]))return false;
+	}
+	return true;
+}
 bool operator==(Object const& left, Object const& right)
 {
 	if (left.Type != right.Type)return false;
 	if (left.Type == otInt)if (left.Value.Int != right.Value.Int)return false;
 	if (left.Type == otDouble)if (left.Value.Double != right.Value.Double)return false;
-	if (left.Type == otArray)if (left.Value.Array != right.Value.Array)return false;
+	if (left.Type == otArray)if (!CompareArrays(left.Value.Array, right.Value.Array))return false;
 	return true;
+}
+
+void DeleteNestedArray(ObjectArray* data)
+{
+	
+	int size = data->Count;
+	for (int i = 0; i < size; i++)
+	{
+		if (data->Data[i].Type == otArray)DeleteNestedArray(data->Data[i].Value.Array);
+	}
+	delete data;
 }
 HRESULT __stdcall CList::Remove(Object obj)
 {
+
 	m_l.remove(obj);
 	if (obj.Type == ObjectType::otArray)
 	{
-		delete obj.Value.Array->Data;
-		delete obj.Value.Array;
+		DeleteNestedArray(obj.Value.Array);
 	}
+	if (m_Enumerator > m_l.size())CList::Reset();
 	return S_OK;
 }
 HRESULT __stdcall CList::GetCount(unsigned* count)
@@ -70,23 +101,25 @@ HRESULT __stdcall CList::Reset()
 {
 
 	m_Enumerator = 0;
+	m_Iterator = m_l.begin();
 	return S_OK;
 }
 HRESULT __stdcall CList::MoveNext(int* result)
 {
 	if (m_Enumerator >= m_l.size() - 1)
 	{
-		*result = m_Enumerator;
+		*result = 0;
 		return S_FALSE;
 	}
 	m_Enumerator++;
-	*result = m_Enumerator;
+	m_Iterator++;
+	*result = 1;
 	return S_OK;
 }
 HRESULT __stdcall CList::GetCurrent(Object* obj)
 {
 	if (m_l.empty())return S_FALSE;
-
+	
 	int i = 0;
 	for (auto& iter : m_l)
 	{

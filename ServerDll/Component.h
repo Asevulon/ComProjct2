@@ -36,11 +36,11 @@ class CList : public ICollection, public IEnumerator
 
 	std::list<Object> m_l;
 	int m_Enumerator = 0;
-
+	std::list<Object>::iterator m_Iterator = m_l.begin();
 public:
 
 	// Конструктор
-	CList() : m_cRef(0) {}
+	CList() : m_cRef(0) {  }
 
 	// Деструктор
 	~CList() { std::cout << __FUNCTION__ << std::endl; }
